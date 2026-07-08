@@ -1,0 +1,14 @@
+# Format: nama / password
+
+user-jan / pass-jan
+user-feb / pass-feb
+user-mar / pass-mar
+user-apr / pass-apr
+user-may / pass-may
+user-jun / pass-jun
+user-jul / pass-jul
+user-aug / pass-aug
+user-sep / pass-sep
+user-oct / pass-oct
+user-nov / pass-nov
+user-dec / pass-dec

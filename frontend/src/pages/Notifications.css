@@ -1,0 +1,128 @@
+.notifications-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.notifications-page h2 {
+  color: white;
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.empty-state {
+  background: white;
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state p {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.notifications-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .notifications-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.notifications-list {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  margin-bottom: 12px;
+}
+
+.notification-item:hover {
+  background: #f9fafb;
+}
+
+.notification-item.active {
+  background: #f0f4ff;
+  border-color: #667eea;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notification-header h4 {
+  color: #1f2937;
+  font-size: 16px;
+  margin: 0;
+}
+
+.notification-header .date {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.notification-item .preview {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.notification-detail {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.notification-detail h3 {
+  color: #1f2937;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.notification-detail .meta {
+  color: #9ca3af;
+  font-size: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-detail .content {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  border-left: 4px solid #dc2626;
+  margin: 16px 0;
+}

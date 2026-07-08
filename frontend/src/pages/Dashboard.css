@@ -1,0 +1,230 @@
+.dashboard {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 20px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h2 {
+  color: #1f2937;
+  font-size: 24px;
+}
+
+.active-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.xl-login-section {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.xl-login-section h3 {
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.xl-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+}
+
+.xl-login-form input {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.2s;
+}
+
+.xl-login-form input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.xl-login-form button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.xl-login-form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.xl-login-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.otp-verify {
+  display: flex;
+  gap: 12px;
+}
+
+.otp-verify input {
+  flex: 1;
+}
+
+.otp-verify button {
+  white-space: nowrap;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  border-left: 4px solid #dc2626;
+}
+
+.profile-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.profile-card,
+.balance-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card h3,
+.balance-card h3 {
+  color: #1f2937;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.profile-info p,
+.balance-info p {
+  color: #4b5563;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.balance-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.balance-item .label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.balance-item .value {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.accounts-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.accounts-section h3 {
+  color: #1f2937;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.account-item.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.account-item span {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.account-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #667eea;
+  color: white;
+}
+
+.account-actions button:hover {
+  background: #5568d3;
+}
+
+.account-actions button.danger {
+  background: #ef4444;
+}
+
+.account-actions button.danger:hover {
+  background: #dc2626;
+}

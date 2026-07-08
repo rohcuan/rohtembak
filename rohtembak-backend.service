@@ -1,0 +1,17 @@
+[Unit]
+Description=RohTembak Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/app/backend
+Environment=PATH=/app/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/app/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/rohtembak/backend.log
+StandardError=append:/var/log/rohtembak/backend.log
+
+[Install]
+WantedBy=multi-user.target
