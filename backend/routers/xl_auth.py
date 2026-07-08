@@ -1,105 +1,113 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 import sys
 import os
 
-# Add project root to path so we can import app modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.ciam import Ciam
-from app.service.auth import Auth
+from app.client import ciam
+from app.service.auth import AuthInstance
 
 router = APIRouter()
 
 class OTPRequest(BaseModel):
-    msisdn: str  # Phone number e.g. "6281234567890"
+    msisdn: str
 
 class OTPVerify(BaseModel):
     msisdn: str
     otp: str
 
-class AccountInfo(BaseModel):
-    msisdn: str
-    token: str
-
-class SwitchAccount(BaseModel):
-    msisdn: str
-
 @router.post("/otp/request")
 async def request_otp(request: OTPRequest):
     """Request OTP for XL login"""
     try:
-        ciam = Ciam()
-        result = await ciam.get_otp(request.msisdn)
-        return {"success": True, "message": "OTP sent", "data": result}
+        # Validate contact first
+        if not ciam.validate_contact(request.msisdn):
+            raise HTTPException(status_code=400, detail="Invalid phone number format")
+        
+        # Request OTP
+        request_id = ciam.get_otp(request.msisdn)
+        return {"success": True, "message": "OTP sent", "request_id": request_id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/otp/verify")
 async def verify_otp(request: OTPVerify):
-    """Verify OTP and save token"""
+    """Verify OTP and login to XL"""
     try:
-        ciam = Ciam()
-        result = await ciam.submit_otp(request.msisdn, request.otp)
+        # Submit OTP
+        result = ciam.submit_otp(
+            request.msisdn,
+            request.otp,
+            AuthInstance.api_key,
+            ""
+        )
         
-        # Save token using Auth
-        auth = Auth()
-        auth.save_refresh_token(request.msisdn, result.get("refresh_token", ""))
-        auth.set_active_user(request.msisdn)
-        
-        return {"success": True, "message": "Login successful", "msisdn": request.msisdn}
+        if result and "tokens" in result:
+            # Add to AuthInstance
+            AuthInstance.add_refresh_token(
+                request.msisdn,
+                result["tokens"]["refresh_token"],
+                result.get("subscriber_id", ""),
+                result.get("subscription_type", "")
+            )
+            
+            # Set as active user
+            AuthInstance.set_active_user(request.msisdn)
+            
+            return {"success": True, "message": "Login successful", "msisdn": request.msisdn}
+        else:
+            raise HTTPException(status_code=400, detail="Invalid OTP or login failed")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/accounts")
-async def list_accounts():
-    """List all saved XL accounts"""
+async def get_accounts():
+    """Get list of saved XL accounts"""
     try:
-        auth = Auth()
-        tokens = auth.load_tokens()
-        active = auth.get_active_user()
-        
         accounts = []
-        for msisdn, token_data in tokens.items():
+        for token_data in AuthInstance.refresh_tokens:
             accounts.append({
-                "msisdn": msisdn,
-                "is_active": msisdn == active,
-                "has_token": bool(token_data.get("refresh_token"))
+                "msisdn": token_data.get("msisdn", ""),
+                "subscriber_id": token_data.get("subscriber_id", ""),
+                "subscription_type": token_data.get("subscription_type", ""),
+                "is_active": AuthInstance.active_user and AuthInstance.active_user.get("msisdn") == token_data.get("msisdn")
             })
-        return {"accounts": accounts, "active": active}
+        return {"success": True, "data": accounts}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/switch")
-async def switch_account(request: SwitchAccount):
-    """Switch active account"""
+async def switch_account(msisdn: str):
+    """Switch to a different XL account"""
     try:
-        auth = Auth()
-        auth.set_active_user(request.msisdn)
-        return {"success": True, "active": request.msisdn}
+        AuthInstance.set_active_user(msisdn)
+        return {"success": True, "message": f"Switched to {msisdn}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/accounts/{msisdn}")
 async def remove_account(msisdn: str):
-    """Remove a saved account"""
+    """Remove a saved XL account"""
     try:
-        auth = Auth()
-        auth.remove_refresh_token(msisdn)
+        AuthInstance.remove_refresh_token(msisdn)
         return {"success": True, "message": f"Account {msisdn} removed"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/status")
-async def auth_status():
-    """Check if user is logged in"""
+async def get_login_status():
+    """Get current login status"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        return {
-            "logged_in": active is not None,
-            "active_msisdn": active
-        }
+        if AuthInstance.active_user:
+            return {
+                "success": True,
+                "logged_in": True,
+                "msisdn": AuthInstance.active_user.get("msisdn", ""),
+                "subscriber_id": AuthInstance.active_user.get("subscriber_id", "")
+            }
+        else:
+            return {"success": True, "logged_in": False}
     except Exception as e:
-        return {"logged_in": False, "active_msisdn": None}
+        raise HTTPException(status_code=400, detail=str(e))

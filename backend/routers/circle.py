@@ -6,8 +6,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.circle import Circle
-from app.service.auth import Auth
+from app.client import circle
+from app.service.auth import AuthInstance
 
 router = APIRouter()
 
@@ -27,58 +27,82 @@ class CreateCircle(BaseModel):
 async def get_circle_status():
     """Get circle group status"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        status = await circle.get_group_data()
+        tokens = AuthInstance.active_user["tokens"]
+        status = circle.get_group_data(AuthInstance.api_key, tokens)
         return {"success": True, "data": status}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/members")
 async def get_circle_members():
-    """Get circle members"""
+    """Get circle group members"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        members = await circle.get_group_members()
+        tokens = AuthInstance.active_user["tokens"]
+        # First get group data to get group_id
+        group_data = circle.get_group_data(AuthInstance.api_key, tokens)
+        group_id = group_data.get("group_id", "")
+        
+        members = circle.get_group_members(AuthInstance.api_key, tokens, group_id)
         return {"success": True, "data": members}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/invite")
 async def invite_member(request: InviteMember):
-    """Invite member to circle"""
+    """Invite a member to circle"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        result = await circle.invite_circle_member(request.phone_number)
+        tokens = AuthInstance.active_user["tokens"]
+        # Validate member first
+        validation = circle.validate_circle_member(AuthInstance.api_key, tokens, request.phone_number)
+        
+        # Get group data
+        group_data = circle.get_group_data(AuthInstance.api_key, tokens)
+        group_id = group_data.get("group_id", "")
+        
+        # Invite member
+        result = circle.invite_circle_member(
+            AuthInstance.api_key,
+            tokens,
+            request.phone_number,
+            group_id,
+            AuthInstance.active_user["number"],
+            AuthInstance.active_user["subscriber_id"],
+            AuthInstance.active_user["subscription_type"]
+        )
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/remove")
 async def remove_member(request: RemoveMember):
-    """Remove member from circle"""
+    """Remove a member from circle"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        result = await circle.remove_circle_member(request.phone_number)
+        tokens = AuthInstance.active_user["tokens"]
+        # Get group data
+        group_data = circle.get_group_data(AuthInstance.api_key, tokens)
+        group_id = group_data.get("group_id", "")
+        
+        result = circle.remove_circle_member(
+            AuthInstance.api_key,
+            tokens,
+            request.phone_number,
+            group_id,
+            AuthInstance.active_user["number"],
+            AuthInstance.active_user["subscriber_id"],
+            AuthInstance.active_user["subscription_type"]
+        )
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -87,28 +111,39 @@ async def remove_member(request: RemoveMember):
 async def accept_invitation(request: AcceptInvitation):
     """Accept circle invitation"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        result = await circle.accept_circle_invitation(request.invitation_id)
+        tokens = AuthInstance.active_user["tokens"]
+        result = circle.accept_circle_invitation(
+            AuthInstance.api_key,
+            tokens,
+            request.invitation_id,
+            AuthInstance.active_user["number"],
+            AuthInstance.active_user["subscriber_id"],
+            AuthInstance.active_user["subscription_type"]
+        )
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/create")
 async def create_circle(request: CreateCircle):
-    """Create new circle"""
+    """Create a new circle"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        result = await circle.create_circle(request.name)
+        tokens = AuthInstance.active_user["tokens"]
+        result = circle.create_circle(
+            AuthInstance.api_key,
+            tokens,
+            request.name,
+            AuthInstance.active_user["number"],
+            AuthInstance.active_user["subscriber_id"],
+            AuthInstance.active_user["subscription_type"],
+            ""
+        )
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -117,13 +152,21 @@ async def create_circle(request: CreateCircle):
 async def get_circle_bonus():
     """Get circle bonus data"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        circle = Circle(active)
-        bonus = await circle.get_bonus_data()
+        tokens = AuthInstance.active_user["tokens"]
+        # Get group data first
+        group_data = circle.get_group_data(AuthInstance.api_key, tokens)
+        group_id = group_data.get("group_id", "")
+        
+        bonus = circle.get_bonus_data(
+            AuthInstance.api_key,
+            tokens,
+            group_id,
+            AuthInstance.active_user["number"],
+            AuthInstance.active_user["subscriber_id"]
+        )
         return {"success": True, "data": bonus}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
