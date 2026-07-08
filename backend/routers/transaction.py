@@ -4,8 +4,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.engsel import Engsel
-from app.service.auth import Auth
+from app.client import engsel
+from app.service.auth import AuthInstance
 
 router = APIRouter()
 
@@ -13,13 +13,11 @@ router = APIRouter()
 async def get_transactions():
     """Get transaction history"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        transactions = await engsel.get_transaction_history()
+        tokens = AuthInstance.active_user["tokens"]
+        transactions = engsel.get_transaction_history(AuthInstance.api_key, tokens)
         return {"success": True, "data": transactions}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

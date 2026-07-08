@@ -4,8 +4,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.engsel import Engsel
-from app.service.auth import Auth
+from app.client import engsel
+from app.service.auth import AuthInstance
 
 router = APIRouter()
 
@@ -13,13 +13,12 @@ router = APIRouter()
 async def get_profile():
     """Get user profile information"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        profile = await engsel.get_profile()
+        api_key = AuthInstance.api_key
+        tokens = AuthInstance.active_user["tokens"]
+        profile = engsel.get_profile(api_key, tokens["access_token"], tokens["id_token"])
         return {"success": True, "data": profile}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -28,13 +27,11 @@ async def get_profile():
 async def get_balance():
     """Get user balance (pulsa & kuota)"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        balance = await engsel.get_balance()
+        tokens = AuthInstance.active_user["tokens"]
+        balance = engsel.get_balance(AuthInstance.api_key, tokens["id_token"])
         return {"success": True, "data": balance}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -43,13 +40,11 @@ async def get_balance():
 async def get_tiering():
     """Get tiering information"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        tiering = await engsel.get_tiering_info()
+        tokens = AuthInstance.active_user["tokens"]
+        tiering = engsel.get_tiering_info(AuthInstance.api_key, tokens)
         return {"success": True, "data": tiering}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -58,13 +53,11 @@ async def get_tiering():
 async def get_dashboard():
     """Get dashboard segments"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        dashboard = await engsel.dashboard_segments()
+        tokens = AuthInstance.active_user["tokens"]
+        dashboard = engsel.dashboard_segments(AuthInstance.api_key, tokens)
         return {"success": True, "data": dashboard}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

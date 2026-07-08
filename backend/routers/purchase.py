@@ -5,79 +5,55 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.engsel import Engsel
-from app.service.auth import Auth
-from app.menus.purchase import purchase_balance, purchase_qris, purchase_ewallet, purchase_decoy
+from app.service.auth import AuthInstance
+from app.menus.purchase import purchase_by_family, purchase_n_times
 
 router = APIRouter()
 
-class PurchaseBalanceRequest(BaseModel):
-    option_code: str
+class PurchaseByFamilyRequest(BaseModel):
+    family_code: str
+    use_decoy: bool = False
+    pause_on_success: bool = False
+    delay_seconds: int = 0
+    start_from_option: int = 1
 
-class PurchaseQRISRequest(BaseModel):
-    option_code: str
-    amount: int
+class PurchaseNTimesRequest(BaseModel):
+    package_code: str
+    n: int
+    use_decoy: bool = False
+    delay_seconds: int = 0
 
-class PurchaseEWalletRequest(BaseModel):
-    option_code: str
-    phone_number: str
-
-class PurchaseDecoyRequest(BaseModel):
-    option_code: str
-    decoy_type: str  # "balance" or "qris"
-
-@router.post("/balance")
-async def buy_with_balance(request: PurchaseBalanceRequest):
-    """Purchase package using balance (pulsa)"""
+@router.post("/by-family")
+async def buy_by_family(request: PurchaseByFamilyRequest):
+    """Purchase all packages in a family"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        result = await purchase_balance(active, request.option_code)
+        result = purchase_by_family(
+            request.family_code,
+            request.use_decoy,
+            request.pause_on_success,
+            request.delay_seconds,
+            request.start_from_option
+        )
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/qris")
-async def buy_with_qris(request: PurchaseQRISRequest):
-    """Purchase package using QRIS"""
+@router.post("/n-times")
+async def buy_n_times(request: PurchaseNTimesRequest):
+    """Purchase the same package n times"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        result = await purchase_qris(active, request.option_code, request.amount)
-        return {"success": True, "data": result}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/ewallet")
-async def buy_with_ewallet(request: PurchaseEWalletRequest):
-    """Purchase package using e-wallet"""
-    try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
-            raise HTTPException(status_code=401, detail="No active account")
-        
-        result = await purchase_ewallet(active, request.option_code, request.phone_number)
-        return {"success": True, "data": result}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/decoy")
-async def buy_with_decoy(request: PurchaseDecoyRequest):
-    """Purchase package using decoy method"""
-    try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
-            raise HTTPException(status_code=401, detail="No active account")
-        
-        result = await purchase_decoy(active, request.option_code, request.decoy_type)
+        result = purchase_n_times(
+            request.package_code,
+            request.n,
+            request.use_decoy,
+            request.delay_seconds
+        )
         return {"success": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

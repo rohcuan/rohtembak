@@ -5,8 +5,8 @@ import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.engsel import Engsel
-from app.service.auth import Auth
+from app.client import engsel
+from app.service.auth import AuthInstance
 
 router = APIRouter()
 
@@ -14,13 +14,11 @@ router = APIRouter()
 async def get_families():
     """Get all package families"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        families = await engsel.get_families()
+        tokens = AuthInstance.active_user["tokens"]
+        families = engsel.get_families(AuthInstance.api_key, tokens, "")
         return {"success": True, "data": families}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -29,59 +27,57 @@ async def get_families():
 async def get_family(family_code: str):
     """Get packages in a family"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        family = await engsel.get_family(family_code)
+        tokens = AuthInstance.active_user["tokens"]
+        family = engsel.get_package(AuthInstance.api_key, tokens, family_code)
         return {"success": True, "data": family}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{option_code}")
+@router.get("/package/{option_code}")
 async def get_package(option_code: str):
     """Get package details"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        package = await engsel.get_package(option_code)
+        tokens = AuthInstance.active_user["tokens"]
+        package = engsel.get_package_details(
+            AuthInstance.api_key, tokens, option_code, 
+            AuthInstance.active_user["number"], 
+            AuthInstance.active_user["subscriber_id"],
+            AuthInstance.active_user["subscription_type"],
+            ""
+        )
         return {"success": True, "data": package}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{option_code}/addons")
+@router.get("/addons/{option_code}")
 async def get_addons(option_code: str):
-    """Get package addons"""
+    """Get addons for a package"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        addons = await engsel.get_addons(option_code)
+        tokens = AuthInstance.active_user["tokens"]
+        addons = engsel.get_addons(AuthInstance.api_key, tokens, option_code)
         return {"success": True, "data": addons}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/my/active")
-async def get_my_packages():
+async def get_my_active_packages():
     """Get user's active packages"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        packages = await engsel.get_package()
-        return {"success": True, "data": packages}
+        tokens = AuthInstance.active_user["tokens"]
+        profile = engsel.get_profile(AuthInstance.api_key, tokens["access_token"], tokens["id_token"])
+        return {"success": True, "data": profile.get("packages", [])}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -89,7 +85,7 @@ async def get_my_packages():
 async def get_hot_packages():
     """Get hot packages"""
     try:
-        hot_data_path = os.path.join(os.path.dirname(__file__), "..", "hot_data", "hot.json")
+        hot_data_path = os.path.join(os.path.dirname(__file__), "..", "..", "cli", "hot_data", "hot.json")
         with open(hot_data_path, "r") as f:
             hot = json.load(f)
         return {"success": True, "data": hot}
@@ -100,7 +96,7 @@ async def get_hot_packages():
 async def get_hot_bundles():
     """Get hot bundles"""
     try:
-        hot_data_path = os.path.join(os.path.dirname(__file__), "..", "hot_data", "hot2.json")
+        hot_data_path = os.path.join(os.path.dirname(__file__), "..", "..", "cli", "hot_data", "hot2.json")
         with open(hot_data_path, "r") as f:
             hot2 = json.load(f)
         return {"success": True, "data": hot2}

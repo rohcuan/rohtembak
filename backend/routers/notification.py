@@ -4,8 +4,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "cli"))
 
-from app.client.engsel import Engsel
-from app.service.auth import Auth
+from app.client import engsel
+from app.service.auth import AuthInstance
 
 router = APIRouter()
 
@@ -13,13 +13,11 @@ router = APIRouter()
 async def get_notifications():
     """Get all notifications"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        notifications = await engsel.get_notifications()
+        tokens = AuthInstance.active_user["tokens"]
+        notifications = engsel.get_notifications(AuthInstance.api_key, tokens)
         return {"success": True, "data": notifications}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -28,13 +26,11 @@ async def get_notifications():
 async def get_notification_detail(notification_id: str):
     """Get notification detail"""
     try:
-        auth = Auth()
-        active = auth.get_active_user()
-        if not active:
+        if not AuthInstance.active_user:
             raise HTTPException(status_code=401, detail="No active account")
         
-        engsel = Engsel(active)
-        detail = await engsel.get_notification_detail(notification_id)
+        tokens = AuthInstance.active_user["tokens"]
+        detail = engsel.get_notification_detail(AuthInstance.api_key, tokens, notification_id)
         return {"success": True, "data": detail}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
